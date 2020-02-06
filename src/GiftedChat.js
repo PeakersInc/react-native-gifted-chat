@@ -114,6 +114,12 @@ class GiftedChat extends React.Component {
     this.setIsMounted(false);
   }
 
+  componentDidMount () {
+    setTimeout(() => {
+      this.scrollToBottom(false)
+    }, 150)
+  }
+
   componentWillReceiveProps(nextProps = {}) {
     const { messages, text } = nextProps;
     this.setMessages(messages || []);
@@ -222,7 +228,12 @@ class GiftedChat extends React.Component {
       : this.props.minInputToolbarHeight;
   }
   calculateInputToolbarHeight(composerHeight) {
-    return composerHeight + (this.getMinInputToolbarHeight() - MIN_COMPOSER_HEIGHT);
+    // TODO Need fix.
+    // Don't know why it calculates height wrong.
+    // These calculations rely on the constants and some magic numbers (at least for me).
+    // I think it will be better to use onLayout to get real height in InputToolbar and Message containers for that.
+    const result = composerHeight + (this.getMinInputToolbarHeight() - MIN_COMPOSER_HEIGHT);
+    return result + 10 // TODO Fix. Magic number
   }
 
   /**
@@ -285,6 +296,8 @@ class GiftedChat extends React.Component {
       this.onKeyboardWillShow(e);
     }
     this.setIsTypingDisabled(false);
+
+    this.scrollToBottom()
   }
 
   onKeyboardDidHide(e) {
@@ -294,13 +307,26 @@ class GiftedChat extends React.Component {
     this.setIsTypingDisabled(false);
   }
 
-  scrollToBottom(animated = true) {
-    if (this._messageContainerRef === null) {
-      return;
+  scrollToBottom (animated = true) {
+    if (!this._messageContainerRef) {
+      return
     }
-    this._messageContainerRef.scrollTo({ y: 0, animated });
+
+    const { inverted } = this.props
+    if (inverted) {
+      this._messageContainerRef.scrollTo({ y: 0, animated })
+    } else {
+      this._messageContainerRef.scrollToEnd({ animated })
+    }
   }
 
+  scrollTo ({ y = 0, animated = true }) {
+    if (!this._messageContainerRef) {
+      return
+    }
+
+    this._messageContainerRef.scrollTo({ y, animated })
+  }
 
   renderMessages() {
     const AnimatedView = this.props.isAnimated === true ? Animated.View : View;
@@ -434,6 +460,7 @@ class GiftedChat extends React.Component {
   renderInputToolbar() {
     const inputToolbarProps = {
       ...this.props,
+      ref: (inputToolbar) => (this.inputToolbar = inputToolbar),
       text: this.getTextFromProp(this.state.text),
       composerHeight: Math.max(MIN_COMPOSER_HEIGHT, this.state.composerHeight),
       onSend: this.onSend,

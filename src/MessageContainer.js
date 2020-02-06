@@ -64,6 +64,10 @@ export default class MessageContainer extends React.PureComponent {
     return null;
   }
 
+  scrollToEnd(options) {
+    this._invertibleScrollViewRef.getScrollResponder().scrollToEnd(options)
+  }
+
   renderLoadEarlier() {
     if (this.props.loadEarlier === true) {
       const loadEarlierProps = {
